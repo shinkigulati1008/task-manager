@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
+import { db, collection, addDoc } from '../firebase';
 import '../App.css';
 
-const AddTask = ({ socket }) => {
+const AddTask = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newTask = { title, description };
-    socket.emit('addTask', newTask);
-    setTitle('');
-    setDescription('');
+    try {
+      await addDoc(collection(db, 'tasks'), { title, description });
+      setTitle('');
+      setDescription('');
+    } catch (error) {
+      console.error('Error adding task: ', error);
+    }
   };
 
   return (

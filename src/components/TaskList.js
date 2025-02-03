@@ -1,29 +1,33 @@
 import React, { useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import { db, collection, onSnapshot } from '../firebase';
 import Task from './Task';
 import AddTask from './AddTask';
 import '../App.css';
-
-const socket = io('http://localhost:5000'); // Backend URL
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    socket.on('tasks', (updatedTasks) => {
-      setTasks(updatedTasks);
+    // Listen for real-time updates from Firestore
+    const unsubscribe = onSnapshot(collection(db, 'tasks'), (snapshot) => {
+      const tasksData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setTasks(tasksData);
     });
 
-    return () => socket.disconnect();
+    // Cleanup listener on unmount
+    return () => unsubscribe();
   }, []);
 
   return (
     <div className="container">
       <h1>Task Manager</h1>
-      <AddTask socket={socket} />
+      <AddTask />
       <ul>
-        {tasks.map((task, index) => (
-          <Task key={index} task={task} />
+        {tasks.map((task) => (
+          <Task key={task.id} task={task} />
         ))}
       </ul>
     </div>
